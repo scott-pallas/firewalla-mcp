@@ -1,0 +1,67 @@
+# Firewalla MCP Server POC
+
+## What We're Building
+A Model Context Protocol (MCP) server that talks to a Firewalla Gold via its local API (port 8833), providing READ-ONLY network security tools.
+
+## Architecture
+- **MCP Server** (TypeScript, stdio transport) — exposes tools to any MCP client
+- **Firewalla Client** — uses `node-firewalla` library to talk to the box's local API
+- **Auth** — ETP token with public/private keypair (generated via firewalla-tools pairing process)
+
+## Target Environment
+- Firewalla Gold, router mode, IP: 10.0.1.1, local API on port 8833
+- Runs on macOS (same LAN as the Firewalla)
+- Node.js 25+
+
+## Key Dependencies
+- `node-firewalla` (npm) — client library for Firewalla local API
+- `@modelcontextprotocol/sdk` — MCP server SDK
+- TypeScript
+
+## MCP Tools to Implement (READ-ONLY ONLY)
+
+### Phase 1 (POC - build these)
+1. `get_alarms` — List active security alarms (intrusion attempts, abnormal uploads, etc.)
+2. `get_devices` — List all devices on the network (hostname, IP, MAC, manufacturer, online status)
+3. `get_network_status` — Ping/health check of the Firewalla box
+4. `get_device_flows` — Get recent network flows for a specific device
+5. `get_network_stats` — Basic network statistics (bandwidth, connection counts)
+
+### Phase 2 (future)
+- `get_rules` — List firewall rules
+- `get_features` — List enabled features
+- `search_flows` — Search flows by IP, domain, time range
+- `get_offline_devices` — Devices that went offline recently
+
+## STRICT CONSTRAINTS
+- **READ-ONLY** — NO write operations, NO rule changes, NO alarm dismissal, NO device blocking
+- Do NOT expose any tool that modifies state on the Firewalla
+- Config via environment variables: FIREWALLA_IP, FIREWALLA_PUBLIC_KEY_PATH, FIREWALLA_PRIVATE_KEY_PATH
+- Graceful error handling — if Firewalla is unreachable, return clear error, don't crash
+
+## Project Structure
+```
+firewalla-mcp/
+├── src/
+│   ├── index.ts          # MCP server entry point
+│   ├── firewalla-client.ts  # Firewalla API wrapper
+│   └── tools/
+│       ├── alarms.ts
+│       ├── devices.ts
+│       ├── network.ts
+│       └── flows.ts
+├── package.json
+├── tsconfig.json
+├── .env.example
+└── README.md
+```
+
+## Build & Run
+- `npm run build` — compile TypeScript
+- `npm run start` — start MCP server (stdio transport)
+- Use `npx @modelcontextprotocol/inspector` to test
+
+## Reference
+- node-firewalla: https://github.com/lesleyxyz/node-firewalla
+- firewalla-tools (for auth setup): https://github.com/lesleyxyz/firewalla-tools
+- MCP SDK: https://github.com/modelcontextprotocol/typescript-sdk
