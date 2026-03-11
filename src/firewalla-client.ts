@@ -47,7 +47,8 @@ export class FirewallaClient {
 
   async getDevices() {
     this.ensureConnected();
-    return this.hostService!.getAll();
+    const result = await this.hostService!.getAll();
+    return (result as any)?.hosts ?? result;
   }
 
   async ping() {
