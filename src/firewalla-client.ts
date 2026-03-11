@@ -151,6 +151,12 @@ export class FirewallaClient {
     return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
   }
 
+  async getNetworkConfig(): Promise<any> {
+    this.ensureConnected();
+    const msg = new FWGetMessage("networkConfig");
+    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
+  }
+
   async getAuditLogs(options: FlowQueryOptions = {}): Promise<any> {
     this.ensureConnected();
     const target = options.mac || "0.0.0.0";
