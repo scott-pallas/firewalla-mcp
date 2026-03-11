@@ -20,18 +20,31 @@ A Model Context Protocol (MCP) server that talks to a Firewalla Gold via its loc
 
 ## MCP Tools to Implement (READ-ONLY ONLY)
 
-### Phase 1 (POC - build these)
+### Phase 1 (complete)
 1. `get_alarms` — List active security alarms (intrusion attempts, abnormal uploads, etc.)
 2. `get_devices` — List all devices on the network (hostname, IP, MAC, manufacturer, online status)
 3. `get_network_status` — Ping/health check of the Firewalla box
-4. `get_device_flows` — Get recent network flows for a specific device
+4. `get_device_flows` — Get recent network flows for a specific device (aggregate summary)
 5. `get_network_stats` — Basic network statistics (bandwidth, connection counts)
+6. `search_flows` — Search individual flow records with filters (domain, IP, port, category, time range, per-device)
+7. `get_audit_logs` — Blocked/allowed traffic decisions from firewall rules
 
-### Phase 2 (future)
-- `get_rules` — List firewall rules
-- `get_features` — List enabled features
-- `search_flows` — Search flows by IP, domain, time range
-- `get_offline_devices` — Devices that went offline recently
+### Implementation note: search_flows / get_audit_logs
+These tools use a custom `FWMessage` (not `FWGetMessage`) because the Firewalla firmware expects
+flow query parameters flat in `msg.data`, not nested under `msg.data.value` like `FWGetMessage` does.
+
+### Phase 2 (complete)
+8. `get_rules` — List firewall rules/policies
+9. `get_features` — List enabled/disabled features
+10. `get_offline_devices` — Devices that went offline recently
+11. `get_dns_queries` — DNS query logs (domains resolved by devices)
+12. `get_vlans` — Network segments, VLANs, and network groups
+
+### Implementation note: get_dns_queries
+Uses the same `FWMessage` pattern as `search_flows` but with `dns: true, regular: false`.
+
+### Implementation note: get_vlans
+Tries `FWGetMessage("networkConfig")` first, falls back to extracting from init data.
 
 ## STRICT CONSTRAINTS
 - **READ-ONLY** — NO write operations, NO rule changes, NO alarm dismissal, NO device blocking
@@ -48,8 +61,11 @@ firewalla-mcp/
 │   └── tools/
 │       ├── alarms.ts
 │       ├── devices.ts
+│       ├── dns.ts
+│       ├── flows.ts
 │       ├── network.ts
-│       └── flows.ts
+│       ├── rules.ts
+│       └── vlans.ts
 ├── package.json
 ├── tsconfig.json
 ├── .env.example
