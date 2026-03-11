@@ -22,6 +22,11 @@ Built for AI-powered network security monitoring. Connect it to Claude Code, Cla
 | `get_device_flows` | Recent network flows for a specific device (by MAC address) |
 | `search_flows` | Search individual flow records with filters (domain, IP, port, category, time range) |
 | `get_audit_logs` | Blocked/allowed traffic decisions — see what your firewall rules caught |
+| `get_rules` | List firewall rules/policies (block, allow, route rules with targets and hit counts) |
+| `get_features` | List enabled/disabled Firewalla features (ad block, VPN, safe search, etc.) |
+| `get_offline_devices` | Devices that recently went offline (configurable lookback window) |
+| `get_dns_queries` | DNS query logs — every domain a device resolved (more complete than flow data) |
+| `get_vlans` | Network segments, VLANs, WAN config, and network groups (sensitive data redacted) |
 
 ## Prerequisites
 
@@ -189,6 +194,11 @@ Once connected to an MCP client, try:
 - *"Show me flows from my MacBook to any gaming servers"*
 - *"What traffic has been blocked by the firewall today?"*
 - *"Find any connections to tracking or spyware domains"*
+- *"Show me all my firewall rules"*
+- *"What Firewalla features are enabled?"*
+- *"Which devices went offline in the last 12 hours?"*
+- *"What DNS queries did my smart TV make today?"*
+- *"Show me my network segments and VLANs"*
 
 ## Project Structure
 
@@ -199,27 +209,24 @@ firewalla-mcp/
 │   ├── firewalla-client.ts   # Firewalla local API wrapper
 │   └── tools/
 │       ├── alarms.ts         # get_alarms
-│       ├── devices.ts        # get_devices
+│       ├── devices.ts        # get_devices, get_offline_devices
+│       ├── dns.ts            # get_dns_queries
+│       ├── flows.ts          # get_device_flows, search_flows, get_audit_logs
 │       ├── network.ts        # get_network_status, get_network_stats
-│       └── flows.ts          # get_device_flows, search_flows, get_audit_logs
+│       ├── rules.ts          # get_rules, get_features
+│       └── vlans.ts          # get_vlans
 ├── dist/                     # Compiled JS (after build)
 ├── package.json
 ├── tsconfig.json
 └── CLAUDE.md                 # AI agent project spec
 ```
 
-## Roadmap
-
-### Phase 2 (planned)
-- `get_rules` — List firewall rules
-- `get_features` — List enabled Firewalla features
-- `get_offline_devices` — Devices that recently went offline
-
 ## Security
 
 - **Read-only only** — this server cannot modify your Firewalla configuration
 - **Local network only** — communicates directly with your Firewalla box, no cloud relay
 - **Key-based auth** — uses the same ETP token mechanism as the Firewalla mobile app
+- **Sensitive data redacted** — WiFi passwords, WireGuard private keys, and other credentials are automatically redacted from tool output
 - **Keep your `.pem` files secure** — they grant read access to your network data
 
 ## Credits
