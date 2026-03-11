@@ -10,7 +10,7 @@
   },
   "keywords": ["firewalla", "mcp", "network-security"],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "node-firewalla": "^1.3.1",

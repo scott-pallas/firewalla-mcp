@@ -2,14 +2,14 @@
 
 A read-only [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that connects to your **Firewalla Gold** via its local API — no MSP subscription required.
 
-Built for AI-powered network security monitoring. Connect it to Claude, OpenClaw, or any MCP-compatible client and query your firewall's alarms, devices, traffic flows, and network stats using natural language.
+Built for AI-powered network security monitoring. Connect it to Claude Code, Claude Desktop, or any MCP-compatible client and query your firewall's alarms, devices, traffic flows, and network stats using natural language.
 
 ## Features
 
-- 🔒 **Read-only by design** — cannot modify rules, dismiss alarms, or change any settings
-- 🏠 **100% local** — talks directly to your Firewalla box on your LAN (port 8833), no cloud dependency
-- 💸 **Free** — uses the local API, no MSP subscription needed
-- 🔌 **MCP standard** — works with any MCP client (Claude Desktop, Claude Code, OpenClaw, etc.)
+- **Read-only by design** — cannot modify rules, dismiss alarms, or change any settings
+- **100% local** — talks directly to your Firewalla box on your LAN (port 8833), no cloud dependency
+- **Free** — uses the local API, no MSP subscription needed
+- **MCP standard** — works with any MCP client (Claude Code, Claude Desktop, etc.)
 
 ## Tools
 
@@ -41,7 +41,7 @@ npm run build
 
 Before the MCP server can talk to your Firewalla, you need to create an authentication keypair. This is similar to pairing a new device with your Firewalla app.
 
-### 1. Install firewalla-tools
+### 1. Clone firewalla-tools
 
 ```bash
 git clone https://github.com/lesleyxyz/firewalla-tools.git
@@ -51,23 +51,45 @@ npm install
 
 ### 2. Enable Additional Pairing
 
-Open the **Firewalla app** → tap your box → **Settings → Advanced → Allow Additional Pairing** → toggle it on.
+In the **Firewalla app** on your phone:
 
-### 3. Generate the Keypair
+1. Tap your Firewalla box
+2. Go to **Settings** → **Advanced** → **Allow Additional Pairing**
+3. Toggle it **ON** — a QR code will appear on screen
+
+### 3. Get the QR Code JSON
+
+The pairing tool needs the JSON data encoded in the QR code. To get it:
+
+1. **Screenshot** the QR code shown in the Firewalla app
+2. Scan the screenshot with a QR code reader app (or use your phone's built-in camera)
+3. The QR code decodes to a JSON string that looks like:
+   ```json
+   {"gid":"...","seed":"...","license":"...","ek":"...","ipaddress":"..."}
+   ```
+4. Copy that JSON string — you'll paste it in the next step
+
+### 4. Generate the Keypair
+
+From the `firewalla-tools` directory:
 
 ```bash
-node create-etp-token
+cd create-etp-token
+node index.js
 ```
 
-Follow the prompts:
-- Enter an email (just a label — used for display in the app)
-- Scan/screenshot the QR code from the Firewalla app and paste its JSON value
-- Enter your Firewalla's IP address (e.g., `10.0.1.1`)
-- Choose "Yes" to create a new keypair
+The tool will prompt you for:
 
-This generates `etp.public.pem` and `etp.private.pem`. **Keep these files safe** — they are your authentication credentials.
+1. **Email** — just a label (e.g., `you@example.com`), used for display in the Firewalla app
+2. **QR code JSON** — paste the JSON string from step 3
+3. **Firewalla IP** — your box's IP address (e.g., `10.0.1.1` — this is usually your default gateway)
+4. **Create new keypair?** — choose **Yes**
 
-### 4. Store the Keys
+This generates `etp.public.pem` and `etp.private.pem` in the current directory.
+
+> **Tip:** To find your Firewalla's IP, run `netstat -rn | grep default` — the gateway IP is your Firewalla.
+
+### 5. Store the Keys
 
 Move the `.pem` files somewhere secure:
 
@@ -77,26 +99,32 @@ mv etp.public.pem etp.private.pem ~/.firewalla/
 chmod 600 ~/.firewalla/*.pem
 ```
 
-## Configuration
-
-Create a `.env` file (or set environment variables):
-
-```bash
-# Required
-FIREWALLA_PUBLIC_KEY_PATH=/Users/yourname/.firewalla/etp.public.pem
-FIREWALLA_PRIVATE_KEY_PATH=/Users/yourname/.firewalla/etp.private.pem
-
-# Optional (defaults to 10.0.1.1)
-FIREWALLA_IP=10.0.1.1
-```
+**Keep these files safe** — they are your authentication credentials.
 
 ## Usage
 
-### Standalone (test mode)
+### With Claude Code
 
-```bash
-npm run start
+Add the server to your global config (`~/.claude.json`) under `mcpServers`:
+
+```json
+{
+  "mcpServers": {
+    "firewalla": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/path/to/firewalla-mcp/dist/index.js"],
+      "env": {
+        "FIREWALLA_IP": "10.0.1.1",
+        "FIREWALLA_PUBLIC_KEY_PATH": "/Users/yourname/.firewalla/etp.public.pem",
+        "FIREWALLA_PRIVATE_KEY_PATH": "/Users/yourname/.firewalla/etp.private.pem"
+      }
+    }
+  }
+}
 ```
+
+Then restart Claude Code. The Firewalla tools will be available in all sessions.
 
 ### With Claude Desktop
 
@@ -121,8 +149,19 @@ Add to your `claude_desktop_config.json`:
 ### With MCP Inspector (debugging)
 
 ```bash
+FIREWALLA_IP=10.0.1.1 \
+FIREWALLA_PUBLIC_KEY_PATH=~/.firewalla/etp.public.pem \
+FIREWALLA_PRIVATE_KEY_PATH=~/.firewalla/etp.private.pem \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `FIREWALLA_PUBLIC_KEY_PATH` | Yes | — | Path to `etp.public.pem` |
+| `FIREWALLA_PRIVATE_KEY_PATH` | Yes | — | Path to `etp.private.pem` |
+| `FIREWALLA_IP` | No | `10.0.1.1` | Your Firewalla's IP address |
 
 ## Example Queries
 
@@ -160,11 +199,6 @@ firewalla-mcp/
 - `search_flows` — Search flows by IP, domain, or time range
 - `get_offline_devices` — Devices that recently went offline
 
-### Future Ideas
-- Scheduled security scan reports (via OpenClaw cron)
-- Anomaly detection alerts
-- Network topology visualization
-
 ## Security
 
 - **Read-only only** — this server cannot modify your Firewalla configuration
@@ -180,4 +214,4 @@ firewalla-mcp/
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
