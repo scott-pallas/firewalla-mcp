@@ -20,6 +20,8 @@ Built for AI-powered network security monitoring. Connect it to Claude Code, Cla
 | `get_network_status` | Ping/health check — is the Firewalla box alive? |
 | `get_network_stats` | Monthly bandwidth, speed test results, network monitor data |
 | `get_device_flows` | Recent network flows for a specific device (by MAC address) |
+| `search_flows` | Search individual flow records with filters (domain, IP, port, category, time range) |
+| `get_audit_logs` | Blocked/allowed traffic decisions — see what your firewall rules caught |
 
 ## Prerequisites
 
@@ -183,6 +185,10 @@ Once connected to an MCP client, try:
 - *"What are the top bandwidth consumers this month?"*
 - *"Show me network flows for device AA:BB:CC:DD:EE:FF"*
 - *"Is my Firewalla box healthy?"*
+- *"Search for all connections to netflix.com in the last 24 hours"*
+- *"Show me flows from my MacBook to any gaming servers"*
+- *"What traffic has been blocked by the firewall today?"*
+- *"Find any connections to tracking or spyware domains"*
 
 ## Project Structure
 
@@ -195,7 +201,7 @@ firewalla-mcp/
 │       ├── alarms.ts         # get_alarms
 │       ├── devices.ts        # get_devices
 │       ├── network.ts        # get_network_status, get_network_stats
-│       └── flows.ts          # get_device_flows
+│       └── flows.ts          # get_device_flows, search_flows, get_audit_logs
 ├── dist/                     # Compiled JS (after build)
 ├── package.json
 ├── tsconfig.json
@@ -207,7 +213,6 @@ firewalla-mcp/
 ### Phase 2 (planned)
 - `get_rules` — List firewall rules
 - `get_features` — List enabled Firewalla features
-- `search_flows` — Search flows by IP, domain, or time range
 - `get_offline_devices` — Devices that recently went offline
 
 ## Security

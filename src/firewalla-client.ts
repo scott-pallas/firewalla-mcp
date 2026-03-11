@@ -147,8 +147,12 @@ export class FirewallaClient {
 
   async getFeatures(): Promise<any> {
     this.ensureConnected();
-    const msg = new FWGetMessage("features");
-    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
+    const init = await this.initService!.init();
+    return {
+      features: init.features ?? {},
+      runtimeFeatures: init.runtimeFeatures ?? {},
+      runtimeDynamicFeatures: init.runtimeDynamicFeatures ?? {},
+    };
   }
 
   async getNetworkConfig(): Promise<any> {
