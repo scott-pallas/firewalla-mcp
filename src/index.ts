@@ -5,6 +5,7 @@ import { registerAlarmTools } from "./tools/alarms.js";
 import { registerDeviceTools } from "./tools/devices.js";
 import { registerNetworkTools } from "./tools/network.js";
 import { registerFlowTools } from "./tools/flows.js";
+import { registerRuleTools } from "./tools/rules.js";
 
 const FIREWALLA_IP = process.env.FIREWALLA_IP || "10.0.1.1";
 const PUBLIC_KEY_PATH = process.env.FIREWALLA_PUBLIC_KEY_PATH;
@@ -28,6 +29,7 @@ registerAlarmTools(server, client);
 registerDeviceTools(server, client);
 registerNetworkTools(server, client);
 registerFlowTools(server, client);
+registerRuleTools(server, client);
 
 async function main() {
   try {

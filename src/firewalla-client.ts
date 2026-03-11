@@ -2,11 +2,33 @@ import {
   SecureUtil,
   FWGroupApi,
   FWGroup,
+  FWMessage,
+  FWGetMessage,
   AlarmService,
   HostService,
   NetworkService,
   InitService,
 } from "node-firewalla";
+
+export interface FlowFilter {
+  domain?: string;
+  ip?: string;
+  port?: number;
+  protocol?: string;
+  category?: string;
+  app?: string;
+}
+
+export interface FlowQueryOptions {
+  mac?: string;
+  count?: number;
+  ts?: number;
+  ets?: number;
+  asc?: boolean;
+  include?: FlowFilter[];
+  exclude?: FlowFilter[];
+  audit?: boolean;
+}
 
 export class FirewallaClient {
   private fwGroup: FWGroup | null = null;
@@ -74,5 +96,51 @@ export class FirewallaClient {
   async getInit(): Promise<any> {
     this.ensureConnected();
     return this.initService!.init();
+  }
+
+  async searchFlows(options: FlowQueryOptions = {}): Promise<any> {
+    this.ensureConnected();
+    const target = options.mac || "0.0.0.0";
+    const data: Record<string, any> = {
+      item: "flows",
+      apiVer: 3,
+      count: options.count ?? 100,
+      regular: true,
+      dns: false,
+      audit: false,
+    };
+    if (options.ts) data.ts = options.ts;
+    if (options.ets) data.ets = options.ets;
+    if (options.asc !== undefined) data.asc = options.asc;
+    if (options.include?.length) data.include = options.include;
+    if (options.exclude?.length) data.exclude = options.exclude;
+
+    const msg = new FWMessage("get", data, target);
+    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
+  }
+
+  async getRules(): Promise<any> {
+    this.ensureConnected();
+    const msg = new FWGetMessage("policies");
+    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
+  }
+
+  async getAuditLogs(options: FlowQueryOptions = {}): Promise<any> {
+    this.ensureConnected();
+    const target = options.mac || "0.0.0.0";
+    const data: Record<string, any> = {
+      item: "auditLogs",
+      apiVer: 3,
+      count: options.count ?? 100,
+      audit: true,
+    };
+    if (options.ts) data.ts = options.ts;
+    if (options.ets) data.ets = options.ets;
+    if (options.asc !== undefined) data.asc = options.asc;
+    if (options.include?.length) data.include = options.include;
+    if (options.exclude?.length) data.exclude = options.exclude;
+
+    const msg = new FWMessage("get", data, target);
+    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
   }
 }
