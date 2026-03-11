@@ -39,9 +39,11 @@ npm run build
 
 ## Pairing (One-Time Setup)
 
-Before the MCP server can talk to your Firewalla, you need to create an authentication keypair. This is similar to pairing a new device with your Firewalla app.
+Before the MCP server can talk to your Firewalla, you need to generate an authentication keypair (ETP token). This is the same pairing mechanism the Firewalla mobile app uses — think of it as registering a new "device" with your Firewalla box.
 
-### 1. Clone firewalla-tools
+This step uses a separate utility called [firewalla-tools](https://github.com/lesleyxyz/firewalla-tools). It is **not** a dependency of this project — you only need it once to generate your `.pem` key files. After pairing is complete, you can delete it.
+
+### 1. Clone firewalla-tools (temporary)
 
 ```bash
 git clone https://github.com/lesleyxyz/firewalla-tools.git
@@ -100,6 +102,15 @@ chmod 600 ~/.firewalla/*.pem
 ```
 
 **Keep these files safe** — they are your authentication credentials.
+
+### 6. Clean Up
+
+You no longer need `firewalla-tools` — feel free to delete it:
+
+```bash
+cd ../..
+rm -rf firewalla-tools
+```
 
 ## Usage
 
@@ -209,7 +220,7 @@ firewalla-mcp/
 ## Credits
 
 - [node-firewalla](https://github.com/lesleyxyz/node-firewalla) — Firewalla local API client library
-- [firewalla-tools](https://github.com/lesleyxyz/firewalla-tools) — Auth token generation tools
+- [firewalla-tools](https://github.com/lesleyxyz/firewalla-tools) — One-time pairing utility for generating ETP auth keys (not a runtime dependency)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) — Model Context Protocol server framework
 
 ## License
