@@ -27,7 +27,6 @@ export interface FlowQueryOptions {
   asc?: boolean;
   include?: FlowFilter[];
   exclude?: FlowFilter[];
-  audit?: boolean;
 }
 
 export class FirewallaClient {
@@ -122,6 +121,12 @@ export class FirewallaClient {
   async getRules(): Promise<any> {
     this.ensureConnected();
     const msg = new FWGetMessage("policies");
+    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
+  }
+
+  async getFeatures(): Promise<any> {
+    this.ensureConnected();
+    const msg = new FWGetMessage("features");
     return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
   }
 

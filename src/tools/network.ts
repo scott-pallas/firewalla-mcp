@@ -65,4 +65,28 @@ export function registerNetworkTools(server: McpServer, client: FirewallaClient)
       }
     },
   );
+
+  server.tool(
+    "get_features",
+    "List enabled/disabled Firewalla features (ad block, safe search, family protect, VPN, etc.)",
+    async () => {
+      try {
+        const result = await client.getFeatures();
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [{ type: "text" as const, text: `Error fetching features: ${message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
 }
