@@ -118,6 +118,27 @@ export class FirewallaClient {
     return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
   }
 
+  async getDnsQueries(options: FlowQueryOptions = {}): Promise<any> {
+    this.ensureConnected();
+    const target = options.mac || "0.0.0.0";
+    const data: Record<string, any> = {
+      item: "flows",
+      apiVer: 3,
+      count: options.count ?? 100,
+      regular: false,
+      dns: true,
+      audit: false,
+    };
+    if (options.ts) data.ts = options.ts;
+    if (options.ets) data.ets = options.ets;
+    if (options.asc !== undefined) data.asc = options.asc;
+    if (options.include?.length) data.include = options.include;
+    if (options.exclude?.length) data.exclude = options.exclude;
+
+    const msg = new FWMessage("get", data, target);
+    return FWGroupApi.sendMessageToBox(this.fwGroup!, msg);
+  }
+
   async getRules(): Promise<any> {
     this.ensureConnected();
     const msg = new FWGetMessage("policies");
