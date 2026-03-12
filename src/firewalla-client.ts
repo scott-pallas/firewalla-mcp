@@ -147,7 +147,7 @@ export class FirewallaClient {
 
   async getFeatures(): Promise<any> {
     this.ensureConnected();
-    const init = await this.initService!.init();
+    const init: any = await this.initService!.init();
 
     const globalPolicy = init.policy ?? {};
 
@@ -188,6 +188,30 @@ export class FirewallaClient {
     dohStatus.activeAnywhere = dohStatus.globalEnabled ||
       Object.values(perNetworkDoh).some((n: any) => n.enabled);
 
+    // System Vulnerabilities scan status
+    // The "System Vulnerabilities" feature in the Firewalla app maps to two policies:
+    //   - device_service_scan: open port/service detection
+    //   - weak_password_scan: weak password detection on common ports
+    // Note: vulScan is a DIFFERENT feature and should NOT be used here.
+    const deviceServiceScan = globalPolicy.device_service_scan ?? false;
+    const weakPasswordScan = globalPolicy.weak_password_scan ?? {};
+
+    const scanStatus: Record<string, any> = {
+      systemVulnerabilities: {
+        deviceServiceScan: !!deviceServiceScan,
+        weakPasswordScan: {
+          state: !!weakPasswordScan.state,
+          cron: weakPasswordScan.cron ?? null,
+        },
+        lastScanTimestamp: init.lastScanTimestamp ?? null,
+      },
+      externalPortScan: init.extScan ?? {},
+      portForwarding: {
+        upnp: init.scan ?? {},
+      },
+      weakPasswordScanResult: init.weakPasswordScanResult ?? {},
+    };
+
     return {
       features: init.features ?? {},
       runtimeFeatures: init.runtimeFeatures ?? {},
@@ -195,6 +219,7 @@ export class FirewallaClient {
       globalPolicy,
       perNetworkPolicies,
       dohStatus,
+      scanStatus,
     };
   }
 

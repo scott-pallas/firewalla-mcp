@@ -68,7 +68,7 @@ export function registerNetworkTools(server: McpServer, client: FirewallaClient)
 
   server.tool(
     "get_features",
-    "List Firewalla features, global policy, per-network policy overrides, and detailed DoH (DNS over HTTPS) status including selected servers and per-network enablement",
+    "List Firewalla features, global policy, per-network policy overrides, DoH (DNS over HTTPS) status, and system vulnerability scan status including external port scans, weak password scans, and UPnP port forwarding results",
     async () => {
       try {
         const result = await client.getFeatures();
