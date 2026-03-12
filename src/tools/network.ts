@@ -68,7 +68,7 @@ export function registerNetworkTools(server: McpServer, client: FirewallaClient)
 
   server.tool(
     "get_features",
-    "List enabled/disabled Firewalla features (ad block, safe search, family protect, VPN, etc.)",
+    "List Firewalla features, global policy, per-network policy overrides, and detailed DoH (DNS over HTTPS) status including selected servers and per-network enablement",
     async () => {
       try {
         const result = await client.getFeatures();

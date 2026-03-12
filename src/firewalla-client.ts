@@ -148,10 +148,53 @@ export class FirewallaClient {
   async getFeatures(): Promise<any> {
     this.ensureConnected();
     const init = await this.initService!.init();
+
+    const globalPolicy = init.policy ?? {};
+
+    // Build per-network policy overrides from networkProfiles
+    const perNetworkPolicies: Record<string, any> = {};
+    const networkProfiles = init.networkProfiles ?? {};
+    for (const [id, profile] of Object.entries<any>(networkProfiles)) {
+      const policy = profile?.policy;
+      if (policy && Object.keys(policy).length > 0) {
+        perNetworkPolicies[profile.name ?? id] = policy;
+      }
+    }
+
+    // Build comprehensive DoH status
+    const dohConfig = init.dohConfig ?? {};
+    const globalDohPolicy = globalPolicy.doh;
+    const dohStatus: Record<string, any> = {
+      globalEnabled: !!(globalDohPolicy?.state),
+      selectedServers: dohConfig.selectedServers ?? [],
+      customizedServers: dohConfig.customizedServers ?? [],
+      allServers: dohConfig.allServers ?? [],
+    };
+
+    // Check per-network DoH overrides
+    const perNetworkDoh: Record<string, any> = {};
+    for (const [id, profile] of Object.entries<any>(networkProfiles)) {
+      const networkDoh = profile?.policy?.doh;
+      if (networkDoh) {
+        perNetworkDoh[profile.name ?? id] = {
+          enabled: !!(networkDoh.state),
+          ...networkDoh,
+        };
+      }
+    }
+    if (Object.keys(perNetworkDoh).length > 0) {
+      dohStatus.perNetwork = perNetworkDoh;
+    }
+    dohStatus.activeAnywhere = dohStatus.globalEnabled ||
+      Object.values(perNetworkDoh).some((n: any) => n.enabled);
+
     return {
       features: init.features ?? {},
       runtimeFeatures: init.runtimeFeatures ?? {},
       runtimeDynamicFeatures: init.runtimeDynamicFeatures ?? {},
+      globalPolicy,
+      perNetworkPolicies,
+      dohStatus,
     };
   }
 
