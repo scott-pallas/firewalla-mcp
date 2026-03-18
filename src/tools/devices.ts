@@ -37,6 +37,117 @@ export function registerDeviceTools(server: McpServer, client: FirewallaClient) 
   );
 
   server.tool(
+    "get_top_talkers",
+    "Get devices ranked by bandwidth usage (top talkers). Shows download, upload, and total bytes for each device over the recent period.",
+    {
+      count: z.number().optional().describe("Number of top devices to return (default 20)"),
+      direction: z.string().optional().describe("Sort by: 'total' (default), 'download', or 'upload'"),
+    },
+    async ({ count, direction }) => {
+      try {
+        const initData = await client.getInit();
+        const hosts = Array.isArray(initData.hosts) ? initData.hosts : [];
+        const limit = Math.min(count ?? 20, 5000);
+        const dir = (direction ?? "total").toLowerCase();
+
+        const devices = hosts.map((host: any) => {
+          const download = Number(host.download ?? host.flowsummary?.download ?? 0);
+          const upload = Number(host.upload ?? host.flowsummary?.upload ?? 0);
+          return {
+            name: host.bname || host.name || host.dhcpName || "Unknown",
+            ip: host.ip,
+            mac: host.mac,
+            manufacturer: host.macVendor || "Unknown",
+            download,
+            upload,
+            total: download + upload,
+            interface: host.intf,
+          };
+        });
+
+        const sortKey = dir === "download" ? "download" : dir === "upload" ? "upload" : "total";
+        devices.sort((a: any, b: any) => b[sortKey] - a[sortKey]);
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(devices.slice(0, limit), null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [{ type: "text" as const, text: `Error fetching top talkers: ${message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.tool(
+    "get_clients_by_network",
+    "Get connected devices grouped by network segment/VLAN. Shows which devices are on each network.",
+    async () => {
+      try {
+        const initData = await client.getInit();
+        const hosts = Array.isArray(initData.hosts) ? initData.hosts : [];
+        const networkProfiles = initData.networkProfiles ?? {};
+
+        // Build network name lookup
+        const networkNames: Record<string, string> = {};
+        for (const [id, profile] of Object.entries<any>(networkProfiles)) {
+          networkNames[id] = profile.name ?? id;
+        }
+
+        // Group devices by interface/network
+        const byNetwork: Record<string, any[]> = {};
+        for (const host of hosts) {
+          const intf = host.intf ?? "unknown";
+          const networkName = networkNames[intf] ?? intf;
+          if (!byNetwork[networkName]) {
+            byNetwork[networkName] = [];
+          }
+          byNetwork[networkName].push({
+            name: host.bname || host.name || host.dhcpName || "Unknown",
+            ip: host.ip,
+            mac: host.mac,
+            manufacturer: host.macVendor || "Unknown",
+            lastActive: host.lastActive,
+          });
+        }
+
+        // Add counts and sort
+        const result: Record<string, any> = {};
+        for (const [network, devices] of Object.entries(byNetwork)) {
+          result[network] = {
+            count: devices.length,
+            devices: devices.sort((a: any, b: any) =>
+              (a.name ?? "").localeCompare(b.name ?? "")
+            ),
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [{ type: "text" as const, text: `Error fetching clients by network: ${message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.tool(
     "get_offline_devices",
     "List devices that have gone offline recently. Returns devices sorted by most recently seen, filtered by how many hours back to look.",
     {

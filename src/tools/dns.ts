@@ -21,7 +21,7 @@ export function registerDnsTools(server: McpServer, client: FirewallaClient) {
 
         const result = await client.getDnsQueries({
           mac,
-          count: count ?? 100,
+          count: Math.min(count ?? 100, 5000),
           ts: now,
           ets: now - hours * 3600,
           include: include.length > 0 ? include : undefined,
