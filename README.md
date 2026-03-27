@@ -13,20 +13,39 @@ Built for AI-powered network security monitoring. Connect it to Claude Code, Cla
 
 ## Tools
 
+### Devices & Traffic
+
 | Tool | Description |
 |------|-------------|
-| `get_alarms` | List active security alarms (intrusion attempts, abnormal uploads, etc.) |
 | `get_devices` | List all network devices (name, IP, MAC, manufacturer, last active) |
-| `get_network_status` | Ping/health check — is the Firewalla box alive? |
-| `get_network_stats` | Monthly bandwidth, speed test results, network monitor data |
+| `get_top_talkers` | Devices ranked by bandwidth usage (download, upload, total bytes) |
+| `get_clients_by_network` | Devices grouped by network segment/VLAN |
+| `get_offline_devices` | Devices that recently went offline (configurable lookback window) |
 | `get_device_flows` | Recent network flows for a specific device (by MAC address) |
 | `search_flows` | Search individual flow records with filters (domain, IP, port, category, time range) |
-| `get_audit_logs` | Blocked/allowed traffic decisions — see what your firewall rules caught |
-| `get_rules` | List firewall rules/policies (block, allow, route rules with targets and hit counts) |
-| `get_features` | List enabled/disabled Firewalla features (ad block, VPN, safe search, etc.) |
-| `get_offline_devices` | Devices that recently went offline (configurable lookback window) |
 | `get_dns_queries` | DNS query logs — every domain a device resolved (more complete than flow data) |
+
+### Security & Rules
+
+| Tool | Description |
+|------|-------------|
+| `get_alarms` | Security alarms with filtering by severity, type, and device |
+| `get_audit_logs` | Blocked/allowed traffic decisions — see what your firewall rules caught |
+| `get_rules` | Firewall rules/policies with filtering by action/target, summary counts, disabled rule toggle |
+| `get_target_lists` | Block/allow target lists (custom domain lists, IP lists, and associated rules) |
+| `get_features` | Enabled/disabled features, global + per-network policy overrides, DoH status, vulnerability scan results |
+
+### Network & System
+
+| Tool | Description |
+|------|-------------|
+| `get_network_status` | Ping/health check — is the Firewalla box alive? |
+| `get_network_stats` | Monthly bandwidth, speed test results, network monitor data |
+| `get_network_performance` | WAN latency, packet loss, DNS response times, connection quality |
+| `get_wan_usage` | Per-WAN bandwidth breakdown (download/upload per interface) |
 | `get_vlans` | Network segments, VLANs, WAN config, and network groups (sensitive data redacted) |
+| `get_system_info` | Firmware version, model, uptime, public IP, CPU/memory usage |
+| `get_vpn_status` | VPN connections — WireGuard, OpenVPN, mesh profiles and connected clients |
 
 ## Prerequisites
 
@@ -187,17 +206,21 @@ Once connected to an MCP client, try:
 
 - *"Show me all active security alarms"*
 - *"List every device on my network"*
-- *"What are the top bandwidth consumers this month?"*
-- *"Show me network flows for device AA:BB:CC:DD:EE:FF"*
-- *"Is my Firewalla box healthy?"*
-- *"Search for all connections to netflix.com in the last 24 hours"*
-- *"Show me flows from my MacBook to any gaming servers"*
-- *"What traffic has been blocked by the firewall today?"*
-- *"Find any connections to tracking or spyware domains"*
-- *"Show me all my firewall rules"*
-- *"What Firewalla features are enabled?"*
+- *"Who are the top bandwidth consumers?"*
+- *"Show me devices grouped by VLAN"*
 - *"Which devices went offline in the last 12 hours?"*
+- *"Show me network flows for device AA:BB:CC:DD:EE:FF"*
+- *"Search for all connections to netflix.com in the last 24 hours"*
 - *"What DNS queries did my smart TV make today?"*
+- *"What traffic has been blocked by the firewall today?"*
+- *"Show me all my firewall rules"*
+- *"What block/allow target lists do I have?"*
+- *"What Firewalla features are enabled?"*
+- *"Is my Firewalla box healthy?"*
+- *"What firmware version is running?"*
+- *"How's my WAN latency and packet loss?"*
+- *"Show me per-WAN bandwidth usage"*
+- *"What's the status of my VPN connections?"*
 - *"Show me my network segments and VLANs"*
 
 ## Project Structure
@@ -209,12 +232,14 @@ firewalla-mcp/
 │   ├── firewalla-client.ts   # Firewalla local API wrapper
 │   └── tools/
 │       ├── alarms.ts         # get_alarms
-│       ├── devices.ts        # get_devices, get_offline_devices
+│       ├── devices.ts        # get_devices, get_top_talkers, get_clients_by_network, get_offline_devices
 │       ├── dns.ts            # get_dns_queries
 │       ├── flows.ts          # get_device_flows, search_flows, get_audit_logs
-│       ├── network.ts        # get_network_status, get_network_stats
-│       ├── rules.ts          # get_rules, get_features
-│       └── vlans.ts          # get_vlans
+│       ├── network.ts        # get_network_status, get_network_stats, get_network_performance, get_wan_usage
+│       ├── rules.ts          # get_rules, get_features, get_target_lists
+│       ├── system.ts         # get_system_info
+│       ├── vlans.ts          # get_vlans
+│       └── vpn.ts            # get_vpn_status
 ├── dist/                     # Compiled JS (after build)
 ├── package.json
 ├── tsconfig.json
@@ -226,7 +251,8 @@ firewalla-mcp/
 - **Read-only only** — this server cannot modify your Firewalla configuration
 - **Local network only** — communicates directly with your Firewalla box, no cloud relay
 - **Key-based auth** — uses the same ETP token mechanism as the Firewalla mobile app
-- **Sensitive data redacted** — WiFi passwords, WireGuard private keys, and other credentials are automatically redacted from tool output
+- **Sensitive data redacted** — WiFi passwords, WireGuard private keys, tokens, credentials, API keys, passphrases, and pre-shared keys are automatically stripped from output
+- **Input limits** — all `count` parameters are clamped to a max of 5000 to prevent excessive data retrieval
 - **Keep your `.pem` files secure** — they grant read access to your network data
 
 ## Credits

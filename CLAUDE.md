@@ -46,6 +46,27 @@ Uses the same `FWMessage` pattern as `search_flows` but with `dns: true, regular
 ### Implementation note: get_vlans
 Tries `FWGetMessage("networkConfig")` first, falls back to extracting from init data.
 
+### Phase 3 (complete)
+13. `get_system_info` — Firmware version, model, uptime, public IP, CPU/memory
+14. `get_top_talkers` — Devices ranked by bandwidth usage
+15. `get_clients_by_network` — Devices grouped by network segment/VLAN
+16. `get_vpn_status` — VPN connections (WireGuard, OpenVPN, mesh)
+17. `get_target_lists` — Block/allow target lists
+18. `get_network_performance` — WAN latency, packet loss, DNS response times
+19. `get_wan_usage` — Per-WAN bandwidth breakdown
+
+### Phase 3 enhancements to existing tools
+- `get_alarms` — Added filtering by severity, type, and device MAC
+- `get_rules` — Added filtering by action/target, rule summary with counts, disabled rule toggle
+
+### Implementation note: get_target_lists
+Tries `FWGetMessage("targetLists")` first, falls back to init data `targetLists` or `customizedCategories`.
+
+### Security hardening (v2.0.0)
+- All `count` parameters clamped to max 5000 in code (not just docs)
+- Expanded sensitive key redaction list (token, credential, apiKey, passphrase, preSharedKey)
+- Dependency vulnerability (hono prototype pollution) patched via npm audit fix
+
 ## STRICT CONSTRAINTS
 - **READ-ONLY** — NO write operations, NO rule changes, NO alarm dismissal, NO device blocking
 - Do NOT expose any tool that modifies state on the Firewalla
@@ -65,7 +86,9 @@ firewalla-mcp/
 │       ├── flows.ts
 │       ├── network.ts
 │       ├── rules.ts
-│       └── vlans.ts
+│       ├── system.ts
+│       ├── vlans.ts
+│       └── vpn.ts
 ├── package.json
 ├── tsconfig.json
 ├── .env.example

@@ -8,6 +8,8 @@ import { registerFlowTools } from "./tools/flows.js";
 import { registerRuleTools } from "./tools/rules.js";
 import { registerDnsTools } from "./tools/dns.js";
 import { registerVlanTools } from "./tools/vlans.js";
+import { registerSystemTools } from "./tools/system.js";
+import { registerVpnTools } from "./tools/vpn.js";
 
 const FIREWALLA_IP = process.env.FIREWALLA_IP || "10.0.1.1";
 const PUBLIC_KEY_PATH = process.env.FIREWALLA_PUBLIC_KEY_PATH;
@@ -22,7 +24,7 @@ if (!PUBLIC_KEY_PATH || !PRIVATE_KEY_PATH) {
 
 const server = new McpServer({
   name: "firewalla-mcp",
-  version: "1.0.0",
+  version: "2.0.0",
 });
 
 const client = new FirewallaClient(FIREWALLA_IP, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH);
@@ -34,6 +36,8 @@ registerFlowTools(server, client);
 registerRuleTools(server, client);
 registerDnsTools(server, client);
 registerVlanTools(server, client);
+registerSystemTools(server, client);
+registerVpnTools(server, client);
 
 async function main() {
   try {
