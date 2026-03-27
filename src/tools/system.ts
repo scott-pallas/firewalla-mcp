@@ -14,7 +14,7 @@ export function registerSystemTools(server: McpServer, client: FirewallaClient) 
           modelName: init.modelName ?? null,
           version: init.version ?? null,
           branch: init.branch ?? null,
-          license: init.license ? (typeof init.license === "string" && init.license.length > 20 ? "[REDACTED]" : init.license) : null,
+          license: init.license ? "[REDACTED]" : null,
           publicIp: init.publicIp ?? init.ddns?.publicIp ?? null,
           uptime: init.sysInfo?.uptime ?? init.uptime ?? null,
           cpu: init.sysInfo?.cpu ?? null,

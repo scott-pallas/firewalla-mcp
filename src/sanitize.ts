@@ -1,6 +1,7 @@
 const sensitiveKeys = new Set([
   "privateKey",
-  "key",
+  "secretKey",
+  "wifiKey",
   "encryption",
   "password",
   "secret",

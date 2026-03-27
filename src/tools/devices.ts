@@ -89,8 +89,12 @@ export function registerDeviceTools(server: McpServer, client: FirewallaClient) 
   server.tool(
     "get_clients_by_network",
     "Get connected devices grouped by network segment/VLAN. Shows which devices are on each network.",
-    async () => {
+    {
+      count: z.number().optional().describe("Max devices per network to return (default 500, max 5000)"),
+    },
+    async ({ count }) => {
       try {
+        const limit = Math.min(count ?? 500, 5000);
         const initData = await client.getInit();
         const hosts = Array.isArray(initData.hosts) ? initData.hosts : [];
         const networkProfiles = initData.networkProfiles ?? {};
@@ -121,11 +125,12 @@ export function registerDeviceTools(server: McpServer, client: FirewallaClient) 
         // Add counts and sort
         const result: Record<string, any> = {};
         for (const [network, devices] of Object.entries(byNetwork)) {
+          const sorted = devices.sort((a: any, b: any) =>
+            (a.name ?? "").localeCompare(b.name ?? "")
+          );
           result[network] = {
             count: devices.length,
-            devices: devices.sort((a: any, b: any) =>
-              (a.name ?? "").localeCompare(b.name ?? "")
-            ),
+            devices: sorted.slice(0, limit),
           };
         }
 
